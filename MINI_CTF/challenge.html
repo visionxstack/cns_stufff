@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>CyberQuest — Challenge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b1120;
+            --surface: #111827;
+            --card: #1a2332;
+            --border: rgba(99,179,237,0.12);
+            --accent: #00d4aa;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --hint-color: #f59e0b;
+            --font: 'Outfit', sans-serif;
+            --cat-color: #00d4aa;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── STICKY TOP BAR ─── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(11,17,32,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 16px;
+            flex-shrink: 0;
+        }
+
+        .topbar-inner {
+            max-width: 480px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 18px;
+            text-decoration: none;
+            flex-shrink: 0;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+        .topbar-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .topbar-breadcrumb {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .topbar-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .topbar-score {
+            background: rgba(0,212,170,0.12);
+            border: 1px solid rgba(0,212,170,0.25);
+            border-radius: 100px;
+            padding: 8px 14px;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--accent);
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        /* ─── MAIN CONTENT ─── */
+        .content {
+            flex: 1;
+            max-width: 480px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 16px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Level + Points header */
+        .challenge-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .level-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-num-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 900;
+            background: rgba(255,255,255,0.06);
+            border: 1.5px solid rgba(255,255,255,0.1);
+            color: var(--text-dim);
+        }
+
+        .level-label {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .level-name {
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .diff-pill {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 2px;
+        }
+
+        .pill-beginner { background: rgba(34,197,94,0.12); color: #4ade80; }
+        .pill-intermediate { background: rgba(251,191,36,0.12); color: #fbbf24; }
+        .pill-advanced { background: rgba(239,68,68,0.12); color: #f87171; }
+        .pill-expert { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+
+        .points-badge {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 10px 16px;
+            text-align: right;
+        }
+
+        .points-value {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--cat-color);
+            line-height: 1;
+        }
+
+        .points-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* ─── QUESTION CARD ─── */
+        .question-card {
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: 20px;
+            padding: 24px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .question-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: var(--cat-color);
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.65;
+            white-space: pre-line;
+        }
+
+        /* ─── MC OPTIONS ─── */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 18px;
+            font-family: var(--font);
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text);
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
+            line-height: 1.4;
+        }
+
+        .option-btn:hover {
+            border-color: rgba(0,212,170,0.4);
+            background: rgba(0,212,170,0.04);
+        }
+
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+
+        .option-btn.selected {
+            border-color: var(--accent);
+            background: rgba(0,212,170,0.08);
+        }
+
+        .option-btn.correct {
+            border-color: var(--success);
+            background: rgba(34,197,94,0.1);
+            color: #4ade80;
+        }
+
+        .option-btn.wrong {
+            border-color: var(--danger);
+            background: rgba(239,68,68,0.08);
+            color: #fca5a5;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            transform: none;
+        }
+
+        .option-letter {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-dim);
+            flex-shrink: 0;
+            transition: all 0.15s;
+        }
+
+        .option-btn.selected .option-letter { background: var(--accent); color: #fff; }
+        .option-btn.correct .option-letter { background: var(--success); color: #fff; }
+        .option-btn.wrong .option-letter { background: var(--danger); color: #fff; }
+
+        /* Submit button for MC */
+        .submit-btn {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #3b82f6, var(--accent));
+            border: none;
+            border-radius: 16px;
+            font-family: var(--font);
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 8px 24px rgba(0,212,170,0.25);
+            -webkit-tap-highlight-color: transparent;
+            margin-top: 4px;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(0,212,170,0.35);
+        }
+
+        .submit-btn:active:not(:disabled) { transform: scale(0.98); }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn.success {
+            background: linear-gradient(135deg, #16a34a, var(--success));
+            box-shadow: 0 8px 24px rgba(34,197,94,0.3);
+        }
+
+        /* ─── TEXT INPUT ─── */
+        .text-input-area {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .text-input {
+            width: 100%;
+            background: var(--card);
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            font-family: var(--font);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            outline: none;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .text-input::placeholder {
+            color: rgba(148,163,184,0.4);
+            font-weight: 400;
+            font-size: 16px;
+        }
+
+        .text-input:focus {
+            border-color: var(--accent);
+            background: rgba(0,212,170,0.04);
+            box-shadow: 0 0 0 4px rgba(0,212,170,0.1);
+        }
+
+        .text-input.correct {
+            border-color: var(--success);
+            background: rgba(34,197,94,0.06);
+            color: #4ade80;
+        }
+
+        .text-input.wrong {
+            border-color: var(--danger);
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+        }
+
+        /* ─── FEEDBACK ─── */
+        .feedback-bar {
+            display: none;
+            border-radius: 14px;
+            padding: 14px 18px;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .feedback-bar.success {
+            background: rgba(34,197,94,0.12);
+            border: 1px solid rgba(34,197,94,0.3);
+            color: #4ade80;
+            display: block;
+        }
+
+        .feedback-bar.error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.25);
+            color: #fca5a5;
+            display: block;
+        }
+
+        .feedback-bar.warning {
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.25);
+            color: #fcd34d;
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ─── HINT SECTION ─── */
+        .hints-section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .hints-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .hints-icon { font-size: 22px; }
+
+        .hints-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .hints-subtitle {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-dim);
+            margin-top: 1px;
+        }
+
+        .hint-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .hint-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: rgba(245,158,11,0.06);
+            border: 1.5px solid rgba(245,158,11,0.2);
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-family: var(--font);
+            font-size: 15px;
+            font-weight: 700;
+            color: #fcd34d;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .hint-btn:hover:not(:disabled) {
+            background: rgba(245,158,11,0.1);
+            border-color: rgba(245,158,11,0.4);
+        }
+
+        .hint-btn:active:not(:disabled) { transform: scale(0.98); }
+
+        .hint-btn:disabled {
+            cursor: default;
+            transform: none;
+        }
+
+        .hint-btn.used {
+            background: rgba(245,158,11,0.04);
+            border-style: dashed;
+            color: var(--text-dim);
+        }
+
+        .hint-btn.revealed {
+            border-color: rgba(245,158,11,0.4);
+            background: rgba(245,158,11,0.08);
+            cursor: default;
+        }
+
+        .hint-btn-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .hint-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(245,158,11,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 900;
+            color: #fbbf24;
+            flex-shrink: 0;
+        }
+
+        .hint-text-wrap { flex: 1; min-width: 0; }
+
+        .hint-label { font-size: 15px; font-weight: 700; }
+
+        .hint-cost {
+            font-size: 12px;
+            color: rgba(245,158,11,0.7);
+            font-weight: 600;
+            margin-top: 1px;
+        }
+
+        .hint-content {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text);
+            line-height: 1.5;
+            margin-top: 6px;
+        }
+
+        /* ─── SOLVED CELEBRATION ─── */
+        .solved-panel {
+            display: none;
+            background: rgba(34,197,94,0.08);
+            border: 1.5px solid rgba(34,197,94,0.3);
+            border-radius: 20px;
+            padding: 28px 20px;
+            text-align: center;
+        }
+
+        .solved-panel.show { display: block; animation: popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .solved-emoji { font-size: 56px; margin-bottom: 12px; }
+
+        .solved-title {
+            font-size: 24px;
+            font-weight: 900;
+            color: #4ade80;
+            margin-bottom: 6px;
+        }
+
+        .solved-pts {
+            font-size: 36px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .solved-pts-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 20px;
+        }
+
+        .solved-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .next-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #16a34a, #22c55e);
+            border: none;
+            border-radius: 14px;
+            font-family: var(--font);
+            font-size: 17px;
+            font-weight: 800;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 6px 20px rgba(34,197,94,0.3);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .next-btn:hover { transform: translateY(-2px); }
+
+        .back-cat-btn {
+            width: 100%;
+            padding: 16px;
+            background: transparent;
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            font-family: var(--font);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .back-cat-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+        /* ─── HINT CONFIRM MODAL ─── */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-backdrop.open { display: flex; }
+
+        .modal-box {
+            background: #1a2332;
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 24px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        }
+
+        .modal-icon { font-size: 48px; margin-bottom: 12px; }
+        .modal-title { font-size: 20px; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+        .modal-body { font-size: 15px; font-weight: 500; color: var(--text-dim); line-height: 1.5; margin-bottom: 24px; }
+
+        .modal-actions { display: flex; flex-direction: column; gap: 10px; }
+
+        .modal-confirm-btn {
+            padding: 16px;
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            border: none;
+            border-radius: 14px;
+            font-family: var(--font);
+            font-size: 16px;
+            font-weight: 800;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .modal-confirm-btn:hover { transform: scale(1.02); }
+
+        .modal-cancel-btn {
+            padding: 14px;
+            background: transparent;
+            border: 1.5px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            font-family: var(--font);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .modal-cancel-btn:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+
+        /* ─── LOADING ─── */
+        .loading-screen {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0,212,170,0.2);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 100px; }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <!-- SESSION OVERLAY -->
+    <div id="sessionOverlay" style="display:none; position:fixed; inset:0; background:rgba(11,17,32,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
+        <h2 style="font-size:32px; font-weight:900; color:var(--text); margin-bottom:12px;">Game Closed</h2>
+        <p style="font-size:18px; color:var(--text-dim);">Thank you for participating in CyberQuest!</p>
+    </div>
+
+    <!-- HEADER -->
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="back-btn" id="backBtn" href="/play.html">←</a>
+            <div class="topbar-info">
+                <div class="topbar-breadcrumb" id="topBreadcrumb">Loading...</div>
+                <div class="topbar-title" id="topTitle">Challenge</div>
+            </div>
+            <div class="topbar-score" id="topScore">0 pts</div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="content" id="mainContent">
+        <div class="loading-screen">
+            <div class="spinner"></div>
+            <div style="color:var(--text-dim);font-size:14px;font-weight:600">Loading challenge...</div>
+        </div>
+    </main>
+
+    <!-- HINT CONFIRM MODAL -->
+    <div class="modal-backdrop" id="hintModal">
+        <div class="modal-box">
+            <div class="modal-icon">💡</div>
+            <div class="modal-title" id="modalTitle">Use a Hint?</div>
+            <div class="modal-body" id="modalBody">This will reduce your score for this challenge.</div>
+            <div class="modal-actions">
+                <button class="modal-confirm-btn" id="modalConfirm">Yes, show hint!</button>
+                <button class="modal-cancel-btn" id="modalCancel">No, I'll keep trying</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── STATE ─────────────────────────────────────────────────────────────
+        const urlParams = new URLSearchParams(window.location.search);
+        const challengeId = urlParams.get('id');
+        const sessionId = localStorage.getItem('ctf_session_id');
+        const playerName = localStorage.getItem('ctf_player_name');
+
+        if (!sessionId || !challengeId) {
+            window.location.href = '/play.html';
+        }
+
+        let challengeData = null;
+        let selectedOption = null;
+        let isSolved = false;
+        let currentScore = 0;
+        let pendingHintTier = null;
+        let revealedHints = new Set();
+
+        const diffConfig = {
+            1: { label: 'Beginner', pill: 'pill-beginner' },
+            2: { label: 'Beginner', pill: 'pill-beginner' },
+            3: { label: 'Intermediate', pill: 'pill-intermediate' },
+            4: { label: 'Intermediate', pill: 'pill-intermediate' },
+            5: { label: 'Advanced', pill: 'pill-advanced' },
+            6: { label: 'Advanced', pill: 'pill-advanced' },
+            7: { label: 'Expert', pill: 'pill-expert' }
+        };
+
+        const hintCosts = [5, 10, 20];
+        const hintLabels = ['Gentle direction', 'Clear clue', 'Almost answer'];
+
+        // ─── SOCKET SESSION ───────────────────────────────────────────────────
+        const socket = io();
+        socket.on('session_state', data => {
+            document.getElementById('sessionOverlay').style.display = data.active ? 'none' : 'flex';
+        });
+
+        // ─── LOAD CHALLENGE ────────────────────────────────────────────────────
+        async function loadChallenge() {
+            try {
+                const [chalRes, progRes] = await Promise.all([
+                    fetch(`/challenge/${challengeId}`, { headers: { 'sessionId': sessionId } }),
+                    fetch('/progress', { headers: { 'sessionId': sessionId } })
+                ]);
+
+                if (chalRes.status === 401) { window.location.href = '/'; return; }
+                if (chalRes.status === 404) { window.location.href = '/play.html'; return; }
+
+                challengeData = await chalRes.json();
+                const progress = await progRes.json();
+                currentScore = progress.score;
+
+                renderChallenge(challengeData);
+            } catch(e) {
+                console.error(e);
+                document.getElementById('mainContent').innerHTML = `
+                    <div style="text-align:center;padding:40px;color:var(--text-dim)">
+                        <div style="font-size:40px;margin-bottom:12px">⚠️</div>
+                        <div style="font-size:16px;font-weight:700">Could not load challenge.</div>
+                        <a href="/play.html" style="color:var(--accent);text-decoration:none;font-weight:700;display:block;margin-top:20px">← Go back</a>
+                    </div>
+                `;
+            }
+        }
+
+        // ─── RENDER ────────────────────────────────────────────────────────────
+        function renderChallenge(data) {
+            const conf = diffConfig[data.level] || diffConfig[2];
+            isSolved = data.solved;
+
+            // Update topbar
+            document.getElementById('topBreadcrumb').textContent = `${data.categoryTitle} › Level ${data.level}`;
+            document.getElementById('topTitle').textContent = data.title;
+            document.getElementById('topScore').textContent = `${currentScore} pts`;
+            document.getElementById('backBtn').href = `/category.html?id=${data.categoryId}`;
+            document.title = `CyberQuest — ${data.title}`;
+
+            // Reveal already-used hints
+            if (data.hintTier > 0) {
+                for (let t = 1; t <= data.hintTier; t++) {
+                    revealedHints.add(t);
+                }
+            }
+
+            // Build main content
+            const main = document.getElementById('mainContent');
+            main.innerHTML = `
+                <!-- Challenge header -->
+                <div class="challenge-header">
+                    <div class="level-badge">
+                        <div class="level-num-badge" style="border-color:rgba(0,212,170,0.25);color:var(--accent)">L${data.level}</div>
+                        <div class="level-label">
+                            <span class="level-name">${data.title}</span>
+                            <span class="diff-pill ${conf.pill}">${conf.label}</span>
+                        </div>
+                    </div>
+                    <div class="points-badge">
+                        <div class="points-value">+${data.points}</div>
+                        <div class="points-label">Points</div>
+                    </div>
+                </div>
+
+                <!-- Question -->
+                <div class="question-card">
+                    <div class="question-text" id="questionText">${escapeHtml(data.question)}</div>
+                </div>
+
+                <!-- Feedback bar -->
+                <div class="feedback-bar" id="feedbackBar"></div>
+
+                <!-- Answer area -->
+                <div id="answerArea"></div>
+
+                <!-- Solved panel -->
+                <div class="solved-panel" id="solvedPanel"></div>
+
+                <!-- Hints section -->
+                <div class="hints-section" id="hintsSection">
+                    <div class="hints-header">
+                        <span class="hints-icon">💡</span>
+                        <div>
+                            <div class="hints-title">Need a hint?</div>
+                            <div class="hints-subtitle">Each hint costs a few points</div>
+                        </div>
+                    </div>
+                    <div class="hint-buttons" id="hintButtons"></div>
+                </div>
+            `;
+
+            // Render answer area
+            if (data.type === 'mc') {
+                renderMC(data);
+            } else {
+                renderText(data);
+            }
+
+            // Render hints
+            renderHints(data);
+
+            // If already solved, show solved state
+            if (isSolved) {
+                showSolvedState(0, false, data);
+            }
+        }
+
+        function renderMC(data) {
+            const area = document.getElementById('answerArea');
+            const letters = ['A', 'B', 'C', 'D', 'E'];
+
+            area.innerHTML = `
+                <div class="options-list" id="optionsList">
+                    ${data.options.map((opt, i) => `
+                        <button class="option-btn${isSolved ? ' disabled' : ''}" data-index="${i}" onclick="selectOption(${i})" ${isSolved ? 'disabled' : ''}>
+                            <span class="option-letter">${letters[i]}</span>
+                            <span>${escapeHtml(opt)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+                <button class="submit-btn${isSolved ? ' success' : ''}" id="submitBtn" onclick="submitAnswer()" ${isSolved || !selectedOption ? 'disabled' : ''}>
+                    ${isSolved ? '✅ Solved!' : 'Check My Answer →'}
+                </button>
+            `;
+        }
+
+        function renderText(data) {
+            const area = document.getElementById('answerArea');
+            area.innerHTML = `
+                <div class="text-input-area">
+                    <input
+                        type="text"
+                        class="text-input"
+                        id="textInput"
+                        placeholder="Type your answer here..."
+                        autocomplete="off"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        ${isSolved ? 'disabled' : ''}
+                    />
+                    <button class="submit-btn${isSolved ? ' success' : ''}" id="submitBtn" onclick="submitAnswer()" ${isSolved ? 'disabled' : ''}>
+                        ${isSolved ? '✅ Solved!' : 'Check My Answer →'}
+                    </button>
+                </div>
+            `;
+
+            if (!isSolved) {
+                document.getElementById('textInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') submitAnswer();
+                });
+                setTimeout(() => document.getElementById('textInput')?.focus(), 300);
+            }
+        }
+
+        function renderHints(data) {
+            const container = document.getElementById('hintButtons');
+            if (!container) return;
+
+            [1, 2, 3].forEach(tier => {
+                const alreadyRevealed = revealedHints.has(tier);
+                const cost = hintCosts[tier - 1];
+                const label = hintLabels[tier - 1];
+
+                const btn = document.createElement('button');
+                btn.id = `hint-btn-${tier}`;
+                btn.className = `hint-btn${alreadyRevealed ? ' revealed' : ''}`;
+
+                if (alreadyRevealed && data.hints[tier - 1]) {
+                    // Already used — show the hint
+                    btn.disabled = true;
+                    btn.innerHTML = `
+                        <div class="hint-btn-left">
+                            <div class="hint-num">${tier}</div>
+                            <div class="hint-text-wrap">
+                                <div class="hint-label">Hint ${tier}: Used</div>
+                                <div class="hint-content">${escapeHtml(data.hints[tier - 1])}</div>
+                            </div>
+                        </div>
+                        <span>✓</span>
+                    `;
+                } else {
+                    // Not yet revealed
+                    const locked = !alreadyRevealed && tier > 1 && !revealedHints.has(tier - 1);
+                    btn.disabled = isSolved;
+                    btn.innerHTML = `
+                        <div class="hint-btn-left">
+                            <div class="hint-num">${tier}</div>
+                            <div class="hint-text-wrap">
+                                <div class="hint-label">Hint ${tier}: ${label}</div>
+                                <div class="hint-cost">−${cost} points</div>
+                            </div>
+                        </div>
+                        <span>→</span>
+                    `;
+                    if (!isSolved) {
+                        btn.onclick = () => openHintModal(tier, cost, label);
+                    }
+                }
+
+                container.appendChild(btn);
+            });
+        }
+
+        // ─── MC INTERACTION ────────────────────────────────────────────────────
+        function selectOption(index) {
+            if (isSolved) return;
+            selectedOption = index;
+
+            const opts = document.querySelectorAll('.option-btn');
+            opts.forEach((btn, i) => {
+                btn.classList.toggle('selected', i === index);
+            });
+
+            document.getElementById('submitBtn').disabled = false;
+        }
+
+        // ─── SUBMIT ────────────────────────────────────────────────────────────
+        let submitting = false;
+        let lastSubmitTime = 0;
+
+        async function submitAnswer() {
+            if (isSolved || submitting) return;
+
+            let answerValue = '';
+
+            if (challengeData.type === 'mc') {
+                if (selectedOption === null) return;
+                answerValue = challengeData.options[selectedOption];
+            } else {
+                const inp = document.getElementById('textInput');
+                if (!inp) return;
+                answerValue = inp.value.trim();
+                if (!answerValue) {
+                    inp.style.borderColor = '#ef4444';
+                    setTimeout(() => inp.style.borderColor = '', 1500);
+                    return;
+                }
+            }
+
+            const now = Date.now();
+            if (now - lastSubmitTime < 2200) {
+                showFeedback(`Please wait a moment...`, 'warning');
+                return;
+            }
+            lastSubmitTime = now;
+
+            submitting = true;
+            const btn = document.getElementById('submitBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Checking... ⏳'; }
+
+            try {
+                const res = await fetch('/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'sessionId': sessionId },
+                    body: JSON.stringify({ challengeId, answer: answerValue })
+                });
+
+                const data = await res.json();
+                submitting = false;
+
+                if (res.status === 429) {
+                    const secs = Math.ceil((data.wait || 2000) / 1000);
+                    showFeedback(`Too fast! Wait ${secs} second${secs !== 1 ? 's' : ''}.`, 'warning');
+                    if (btn) { btn.disabled = false; btn.textContent = 'Check My Answer →'; }
+                    return;
+                }
+
+                if (data.error === 'ALREADY_SOLVED') {
+                    isSolved = true;
+                    showSolvedState(0, false, challengeData);
+                    return;
+                }
+
+                if (data.correct) {
+                    isSolved = true;
+                    currentScore += data.points;
+                    document.getElementById('topScore').textContent = `${currentScore} pts`;
+                    showCorrect();
+                    showSolvedState(data.points, data.noHintBonus, challengeData);
+                    disableHints();
+                } else {
+                    showWrong();
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.textContent = 'Check My Answer →';
+                    }
+                }
+
+            } catch(e) {
+                console.error(e);
+                submitting = false;
+                showFeedback('Network error. Please try again.', 'error');
+                const btn = document.getElementById('submitBtn');
+                if (btn) { btn.disabled = false; btn.textContent = 'Check My Answer →'; }
+            }
+        }
+
+        function showCorrect() {
+            if (challengeData.type === 'mc' && selectedOption !== null) {
+                const opts = document.querySelectorAll('.option-btn');
+                opts.forEach(btn => {
+                    btn.disabled = true;
+                    if (btn.dataset.index == selectedOption) {
+                        btn.classList.remove('selected');
+                        btn.classList.add('correct');
+                    }
+                });
+            } else {
+                const inp = document.getElementById('textInput');
+                if (inp) {
+                    inp.disabled = true;
+                    inp.classList.add('correct');
+                }
+            }
+        }
+
+        function showWrong() {
+            showFeedback("❌ Not quite — try again!", 'error');
+
+            if (challengeData.type === 'mc' && selectedOption !== null) {
+                const opts = document.querySelectorAll('.option-btn');
+                if (opts[selectedOption]) {
+                    opts[selectedOption].classList.add('wrong');
+                    setTimeout(() => {
+                        opts[selectedOption].classList.remove('wrong', 'selected');
+                        selectedOption = null;
+                        document.getElementById('submitBtn').disabled = true;
+                    }, 900);
+                }
+            } else {
+                const inp = document.getElementById('textInput');
+                if (inp) {
+                    inp.classList.add('wrong');
+                    setTimeout(() => {
+                        inp.classList.remove('wrong');
+                        inp.value = '';
+                        inp.focus();
+                    }, 600);
+                }
+            }
+        }
+
+        // ─── SOLVED STATE ──────────────────────────────────────────────────────
+        function showSolvedState(earnedPts, noHintBonus, data) {
+            const solvedPanel = document.getElementById('solvedPanel');
+            if (!solvedPanel) return;
+
+            // Find next unsolved in same category
+            const catId = data.categoryId;
+            const nextHref = `/category.html?id=${catId}`;
+
+            let ptsDisplay = earnedPts > 0 ? `+${earnedPts}` : '✓';
+            let bonusNote = noHintBonus ? `\n🎯 +10 No-Hint Bonus included!` : '';
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.classList.add('success');
+                submitBtn.textContent = '✅ Correct!';
+                submitBtn.disabled = true;
+            }
+
+            solvedPanel.innerHTML = `
+                <div class="solved-emoji">🎉</div>
+                <div class="solved-title">You got it!</div>
+                ${earnedPts > 0 ? `<div class="solved-pts">${ptsDisplay} pts</div>` : ''}
+                <div class="solved-pts-label">${noHintBonus ? '🎯 No-hint bonus included!' : (earnedPts > 0 ? 'Points added to your score' : 'Already solved')}</div>
+                <div class="solved-actions">
+                    <button class="next-btn" onclick="goNext()">Next Level →</button>
+                    <button class="back-cat-btn" onclick="window.location.href='/category.html?id=${data.categoryId}'">
+                        ← Back to ${data.categoryTitle}
+                    </button>
+                </div>
+            `;
+
+            solvedPanel.classList.add('show');
+            solvedPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        async function goNext() {
+            // Load the category to find the next unsolved level
+            try {
+                const res = await fetch(`/category/${challengeData.categoryId}`, {
+                    headers: { 'sessionId': sessionId }
+                });
+                const catData = await res.json();
+                const nextUnsolved = catData.challenges.find(c => !c.solved && c.id !== challengeId);
+                if (nextUnsolved) {
+                    window.location.href = `/challenge.html?id=${nextUnsolved.id}`;
+                } else {
+                    window.location.href = `/category.html?id=${challengeData.categoryId}`;
+                }
+            } catch(e) {
+                window.location.href = `/category.html?id=${challengeData.categoryId}`;
+            }
+        }
+
+        function disableHints() {
+            document.querySelectorAll('.hint-btn:not(.revealed)').forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.4';
+            });
+        }
+
+        // ─── FEEDBACK ─────────────────────────────────────────────────────────
+        let feedbackTimer;
+        function showFeedback(msg, type) {
+            const bar = document.getElementById('feedbackBar');
+            if (!bar) return;
+            bar.textContent = msg;
+            bar.className = `feedback-bar ${type}`;
+            clearTimeout(feedbackTimer);
+            if (type !== 'success') {
+                feedbackTimer = setTimeout(() => {
+                    bar.className = 'feedback-bar';
+                }, 3000);
+            }
+        }
+
+        // ─── HINTS ────────────────────────────────────────────────────────────
+        function openHintModal(tier, cost, label) {
+            pendingHintTier = tier;
+
+            const cumCost = hintCosts.slice(0, tier).reduce((a, b) => a + b, 0);
+            const alreadyCost = hintCosts.slice(0, tier - 1).reduce((a, b) => a + b, 0);
+            const thisCost = cumCost - alreadyCost;
+
+            document.getElementById('modalTitle').textContent = `Hint ${tier}: ${label}`;
+            document.getElementById('modalBody').textContent =
+                `Using this hint will cost you ${thisCost} points from your score.\n\nAre you sure?`;
+
+            document.getElementById('hintModal').classList.add('open');
+        }
+
+        document.getElementById('modalCancel').onclick = () => {
+            document.getElementById('hintModal').classList.remove('open');
+            pendingHintTier = null;
+        };
+
+        document.getElementById('modalConfirm').onclick = async () => {
+            document.getElementById('hintModal').classList.remove('open');
+            if (!pendingHintTier) return;
+
+            const tier = pendingHintTier;
+            pendingHintTier = null;
+
+            try {
+                const res = await fetch('/hint', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'sessionId': sessionId },
+                    body: JSON.stringify({ challengeId, tier })
+                });
+
+                const data = await res.json();
+                if (data.hint) {
+                    revealedHints.add(tier);
+
+                    // Update score display
+                    if (data.deducted) {
+                        currentScore -= data.deducted;
+                        document.getElementById('topScore').textContent = `${currentScore} pts`;
+                        showFeedback(`💡 Hint ${tier} revealed. −${data.deducted} pts`, 'warning');
+                    }
+
+                    // Re-render hints
+                    const hintBtnsContainer = document.getElementById('hintButtons');
+                    if (hintBtnsContainer) {
+                        hintBtnsContainer.innerHTML = '';
+                        // Update data
+                        challengeData.hints = challengeData.hints || [];
+                        challengeData.hints[tier - 1] = data.hint;
+                        challengeData.hintTier = tier;
+                        renderHints(challengeData);
+                    }
+                }
+            } catch(e) {
+                console.error(e);
+                showFeedback('Could not load hint. Try again.', 'error');
+            }
+        };
+
+        // ─── UTILS ────────────────────────────────────────────────────────────
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────────────
+        loadChallenge();
+    </script>
+</body>
+</html>
