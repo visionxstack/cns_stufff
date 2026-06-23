@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>CyberQuest — Category</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0b1120;
+            --surface: #111827;
+            --card: #1a2332;
+            --border: rgba(99, 179, 237, 0.12);
+            --accent: #00d4aa;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --font: 'Outfit', sans-serif;
+            --cat-color: #00d4aa;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        /* ─── CATEGORY HEADER ─── */
+        .cat-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 20px 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cat-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--cat-color), transparent);
+        }
+
+        .cat-header-inner {
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dim);
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .back-btn:hover { color: var(--text); }
+
+        .cat-emoji {
+            font-size: 52px;
+            margin-bottom: 12px;
+            display: block;
+            filter: drop-shadow(0 0 20px rgba(0,212,170,0.3));
+        }
+
+        .cat-title {
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+
+        .cat-desc {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-dim);
+            margin-bottom: 18px;
+        }
+
+        /* Progress in header */
+        .cat-progress {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cat-progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 100px;
+            overflow: hidden;
+        }
+
+        .cat-progress-fill {
+            height: 100%;
+            background: var(--cat-color);
+            border-radius: 100px;
+            transition: width 0.8s ease;
+        }
+
+        .cat-progress-text {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--cat-color);
+            white-space: nowrap;
+        }
+
+        /* ─── LEVELS ─── */
+        .content {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 16px;
+        }
+
+        .difficulty-section {
+            margin-bottom: 24px;
+        }
+
+        .diff-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 12px;
+            padding: 0 4px;
+        }
+
+        .diff-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+        }
+
+        .levels-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .level-card {
+            background: var(--card);
+            border: 1.5px solid var(--border);
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .level-card:hover, .level-card:active {
+            border-color: rgba(255,255,255,0.15);
+            transform: translateX(4px);
+        }
+
+        .level-card:active {
+            transform: scale(0.98);
+        }
+
+        .level-card.solved {
+            border-color: rgba(34,197,94,0.2);
+            background: rgba(34,197,94,0.04);
+        }
+
+        /* Level number badge */
+        .level-num {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 900;
+            flex-shrink: 0;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-dim);
+            border: 1.5px solid rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+
+        .level-card:hover .level-num {
+            background: rgba(var(--cat-rgb), 0.12);
+            color: var(--cat-color);
+            border-color: rgba(var(--cat-rgb), 0.3);
+        }
+
+        .level-num.solved {
+            background: rgba(34,197,94,0.12);
+            border-color: rgba(34,197,94,0.3);
+            color: #4ade80;
+        }
+
+        .level-num.expert {
+            background: rgba(251,191,36,0.1);
+            border-color: rgba(251,191,36,0.25);
+            color: #fbbf24;
+        }
+
+        /* Level info */
+        .level-info { flex: 1; min-width: 0; }
+
+        .level-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .level-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .level-pts {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--cat-color);
+        }
+
+        .level-pill {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pill-beginner { background: rgba(34,197,94,0.1); color: #4ade80; }
+        .pill-intermediate { background: rgba(251,191,36,0.1); color: #fbbf24; }
+        .pill-advanced { background: rgba(239,68,68,0.1); color: #f87171; }
+        .pill-expert { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+
+        .level-hint-indicator {
+            font-size: 11px;
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        /* Right side */
+        .level-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .level-status-icon { font-size: 22px; }
+        .level-arrow { font-size: 16px; color: var(--text-dim); }
+
+        /* Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 18px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-level { height: 84px; margin-bottom: 10px; }
+    </style>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+    <!-- SESSION OVERLAY -->
+    <div id="sessionOverlay" style="display:none; position:fixed; inset:0; background:rgba(11,17,32,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:20px;">
+        <h2 style="font-size:32px; font-weight:900; color:var(--text); margin-bottom:12px;">Game Closed</h2>
+        <p style="font-size:18px; color:var(--text-dim);">Thank you for participating in CyberQuest!</p>
+    </div>
+
+    <!-- HEADER -->
+    <div class="cat-header" id="catHeader">
+        <div class="cat-header-inner">
+            <a class="back-btn" href="/play.html">← Back to Categories</a>
+
+            <span class="cat-emoji" id="catEmoji">🔍</span>
+            <h1 class="cat-title" id="catTitle">Loading...</h1>
+            <p class="cat-desc" id="catDesc"></p>
+
+            <div class="cat-progress">
+                <div class="cat-progress-bar">
+                    <div class="cat-progress-fill" id="catProgressFill" style="width:0%"></div>
+                </div>
+                <div class="cat-progress-text" id="catProgressText">0 / 0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <!-- Skeletons -->
+        <div id="skeletons">
+            <div class="skeleton skeleton-level"></div>
+            <div class="skeleton skeleton-level"></div>
+            <div class="skeleton skeleton-level"></div>
+            <div class="skeleton skeleton-level"></div>
+        </div>
+
+        <!-- Levels -->
+        <div id="levelsList" style="display:none"></div>
+
+    </main>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryId = urlParams.get('id');
+        const sessionId = localStorage.getItem('ctf_session_id');
+
+        if (!sessionId || !categoryId) {
+            window.location.href = '/play.html';
+        }
+
+        // ─── SOCKET SESSION ───────────────────────────────────────────────────
+        const socket = io();
+        socket.on('session_state', data => {
+            document.getElementById('sessionOverlay').style.display = data.active ? 'none' : 'flex';
+        });
+
+        const diffConfig = {
+            1: { label: 'Beginner', pill: 'pill-beginner', pts: 50 },
+            2: { label: 'Beginner', pill: 'pill-beginner', pts: 50 },
+            3: { label: 'Intermediate', pill: 'pill-intermediate', pts: 80 },
+            4: { label: 'Intermediate', pill: 'pill-intermediate', pts: 80 },
+            5: { label: 'Advanced', pill: 'pill-advanced', pts: 120 },
+            6: { label: 'Advanced', pill: 'pill-advanced', pts: 120 },
+            7: { label: 'Expert', pill: 'pill-expert', pts: 150 }
+        };
+
+        async function loadCategory() {
+            try {
+                const res = await fetch(`/category/${categoryId}`, {
+                    headers: { 'sessionId': sessionId }
+                });
+
+                if (res.status === 401) { window.location.href = '/'; return; }
+                if (res.status === 404) { window.location.href = '/play.html'; return; }
+
+                const data = await res.json();
+                renderHeader(data);
+                renderLevels(data);
+            } catch(e) {
+                console.error(e);
+            }
+        }
+
+        function renderHeader(data) {
+            document.title = `CyberQuest — ${data.title}`;
+            document.getElementById('catEmoji').textContent = data.emoji;
+            document.getElementById('catTitle').textContent = data.title;
+
+            const solvedCount = data.challenges.filter(c => c.solved).length;
+            const total = data.challenges.length;
+            const pct = total > 0 ? (solvedCount / total * 100) : 0;
+
+            document.getElementById('catProgressFill').style.width = pct + '%';
+            document.getElementById('catProgressFill').style.background = data.color;
+            document.getElementById('catProgressText').style.color = data.color;
+            document.getElementById('catProgressText').textContent = `${solvedCount} / ${total}`;
+
+            // Apply category color to CSS var
+            document.documentElement.style.setProperty('--cat-color', data.color);
+        }
+
+        function renderLevels(data) {
+            document.getElementById('skeletons').style.display = 'none';
+            const container = document.getElementById('levelsList');
+            container.style.display = 'block';
+
+            // Group by difficulty section
+            const sections = [
+                { title: 'Beginner', range: [1, 2] },
+                { title: 'Intermediate', range: [3, 4] },
+                { title: 'Advanced', range: [5, 6] },
+                { title: 'Expert', range: [7, 7] }
+            ];
+
+            sections.forEach(section => {
+                const levelsInSection = data.challenges.filter(
+                    c => c.level >= section.range[0] && c.level <= section.range[1]
+                );
+                if (!levelsInSection.length) return;
+
+                const sectionEl = document.createElement('div');
+                sectionEl.className = 'difficulty-section';
+
+                const diffPillMap = {
+                    'Beginner': 'pill-beginner',
+                    'Intermediate': 'pill-intermediate',
+                    'Advanced': 'pill-advanced',
+                    'Expert': 'pill-expert'
+                };
+
+                sectionEl.innerHTML = `
+                    <div class="diff-label">
+                        <span class="level-pill ${diffPillMap[section.title]}">${section.title}</span>
+                    </div>
+                    <div class="levels-list" id="section-${section.title}"></div>
+                `;
+                container.appendChild(sectionEl);
+
+                const listEl = sectionEl.querySelector(`#section-${section.title}`);
+
+                levelsInSection.forEach(ch => {
+                    const conf = diffConfig[ch.level] || diffConfig[2];
+                    const isExpert = ch.level === 7;
+                    const hintTier = ch.hintUsed || 0;
+
+                    const card = document.createElement('a');
+                    card.href = `/challenge.html?id=${ch.id}`;
+                    card.className = `level-card${ch.solved ? ' solved' : ''}`;
+
+                    let numClass = ch.solved ? 'solved' : (isExpert ? 'expert' : '');
+                    let numContent = ch.solved ? '✓' : `L${ch.level}`;
+
+                    let hintHtml = '';
+                    if (ch.solved && hintTier > 0) {
+                        hintHtml = `<div class="level-hint-indicator">💡 ${hintTier} hint${hintTier > 1 ? 's' : ''} used</div>`;
+                    }
+
+                    card.innerHTML = `
+                        <div class="level-num ${numClass}">${numContent}</div>
+                        <div class="level-info">
+                            <div class="level-title">${ch.title}</div>
+                            <div class="level-meta">
+                                <span class="level-pts">+${ch.points} pts</span>
+                                <span class="level-pill ${conf.pill}">${conf.label}</span>
+                                ${hintHtml}
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            ${ch.solved
+                                ? '<span class="level-status-icon">✅</span>'
+                                : '<span class="level-arrow">→</span>'
+                            }
+                        </div>
+                    `;
+
+                    listEl.appendChild(card);
+                });
+            });
+        }
+
+        loadCategory();
+    </script>
+</body>
+</html>
