@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Control — Mini CTF</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #09090f;
+            --surface: #0f0f1a;
+            --card: #141421;
+            --card-hover: #181830;
+            --border: #1e1e35;
+            --border-hi: #2a2a50;
+            --accent: #6366f1;
+            --accent-dim: rgba(99,102,241,0.15);
+            --accent-glow: rgba(99,102,241,0.3);
+            --green: #22c55e;
+            --green-dim: rgba(34,197,94,0.12);
+            --red: #ef4444;
+            --red-dim: rgba(239,68,68,0.12);
+            --amber: #f59e0b;
+            --amber-dim: rgba(245,158,11,0.12);
+            --blue: #3b82f6;
+            --blue-dim: rgba(59,130,246,0.12);
+            --text: #e2e2f0;
+            --text-muted: #6b7280;
+            --text-soft: #9ca3af;
+            --font: 'Inter', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --radius: 8px;
+        }
+
+        html, body { height: 100%; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* ── LOGIN SCREEN ── */
+        #loginScreen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+        }
+
+        #loginScreen::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(ellipse 60% 40% at 50% 30%, rgba(99,102,241,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-box {
+            background: var(--card);
+            border: 1px solid var(--border-hi);
+            border-radius: 12px;
+            padding: 48px 40px;
+            width: 380px;
+            position: relative;
+            box-shadow: 0 0 60px rgba(99,102,241,0.06);
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .login-logo .shield {
+            font-size: 48px;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .login-logo h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 0.02em;
+        }
+
+        .login-logo p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-family: var(--mono);
+            letter-spacing: 0.05em;
+        }
+
+        .login-field {
+            margin-bottom: 16px;
+        }
+
+        .login-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-soft);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .login-field input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            border-radius: var(--radius);
+            padding: 12px 16px;
+            font-size: 15px;
+            font-family: var(--mono);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .login-field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .login-error {
+            font-size: 13px;
+            color: var(--red);
+            margin-bottom: 12px;
+            min-height: 18px;
+            font-family: var(--mono);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 13px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-login:hover { opacity: 0.9; }
+        .btn-login:active { transform: scale(0.99); }
+        .btn-login:disabled { opacity: 0.5; cursor: default; }
+
+        .login-rate-msg {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 16px;
+            font-family: var(--mono);
+        }
+
+        /* ── ADMIN MAIN ── */
+        #adminMain {
+            display: none;
+        }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(9,9,15,0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .topbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .topbar-brand .icon { font-size: 20px; }
+
+        .topbar-brand .name {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .topbar-brand .tag {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--accent);
+            background: var(--accent-dim);
+            padding: 2px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .session-chip {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            font-family: var(--mono);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 5px 12px;
+            border-radius: 4px;
+            border: 1px solid;
+            transition: all 0.3s;
+        }
+
+        .session-chip.active { color: var(--green); border-color: rgba(34,197,94,0.3); background: var(--green-dim); }
+        .session-chip.ended  { color: var(--red);   border-color: rgba(239,68,68,0.3);  background: var(--red-dim);   }
+        .session-chip.paused { color: var(--amber);  border-color: rgba(245,158,11,0.3); background: var(--amber-dim); }
+
+        .chip-dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: currentColor;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+
+        .session-chip.ended .chip-dot,
+        .session-chip.paused .chip-dot { animation: none; }
+
+        .btn-logout {
+            font-size: 13px;
+            color: var(--text-muted);
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 5px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-logout:hover { color: var(--text); border-color: var(--border-hi); }
+
+        /* ── LAYOUT ── */
+        .admin-layout {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 28px 32px;
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+        }
+
+        .col-main { display: flex; flex-direction: column; gap: 24px; }
+        .col-side  { display: flex; flex-direction: column; gap: 24px; }
+
+        /* ── CARDS ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: 0.01em;
+        }
+
+        .card-title .icon { font-size: 16px; }
+        .card-body { padding: 20px; }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s;
+            white-space: nowrap;
+            font-family: var(--font);
+        }
+
+        .btn:disabled { opacity: 0.4; cursor: default; }
+        .btn:not(:disabled):active { transform: scale(0.98); }
+
+        .btn-primary   { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .btn-primary:not(:disabled):hover { background: #5153e8; }
+
+        .btn-success   { background: var(--green); color: #fff; border-color: var(--green); }
+        .btn-success:not(:disabled):hover { opacity: 0.9; }
+
+        .btn-danger    { background: var(--red); color: #fff; border-color: var(--red); }
+        .btn-danger:not(:disabled):hover { background: #dc2626; }
+
+        .btn-amber     { background: var(--amber); color: #000; border-color: var(--amber); }
+        .btn-amber:not(:disabled):hover { opacity: 0.9; }
+
+        .btn-ghost     { background: transparent; color: var(--text-soft); border-color: var(--border-hi); }
+        .btn-ghost:not(:disabled):hover { color: var(--text); border-color: var(--border-hi); background: var(--card-hover); }
+
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-xs { padding: 3px 8px; font-size: 11px; border-radius: 4px; }
+
+        .btn-icon-only { padding: 6px 8px; }
+
+        /* ── SESSION CONTROL ── */
+        .session-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .session-btn-big {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 16px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border-hi);
+            background: var(--surface);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font);
+        }
+
+        .session-btn-big:hover { background: var(--card-hover); border-color: var(--border-hi); }
+        .session-btn-big .sb-icon { font-size: 24px; }
+        .session-btn-big .sb-label { font-size: 13px; font-weight: 600; color: var(--text); }
+        .session-btn-big .sb-desc  { font-size: 11px; color: var(--text-muted); text-align: center; }
+
+        .session-btn-big.sb-start  { border-color: rgba(34,197,94,0.3); }
+        .session-btn-big.sb-start:hover  { background: var(--green-dim); }
+        .session-btn-big.sb-end    { border-color: rgba(239,68,68,0.3); }
+        .session-btn-big.sb-end:hover    { background: var(--red-dim); }
+        .session-btn-big.sb-pause  { border-color: rgba(245,158,11,0.3); }
+        .session-btn-big.sb-pause:hover  { background: var(--amber-dim); }
+        .session-btn-big.sb-fresh  { border-color: rgba(239,68,68,0.4); }
+        .session-btn-big.sb-fresh:hover  { background: rgba(239,68,68,0.18); }
+
+        /* ── USER TABLE ── */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 10px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            white-space: nowrap;
+        }
+
+        .data-table th.right { text-align: right; }
+        .data-table th.center { text-align: center; }
+
+        .data-table td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(30,30,53,0.6);
+            vertical-align: middle;
+        }
+
+        .data-table tr:last-child td { border-bottom: none; }
+
+        .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+        .td-name {
+            font-weight: 600;
+            color: var(--text);
+            font-size: 14px;
+        }
+
+        .td-mono {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--text-soft);
+        }
+
+        .td-center { text-align: center; }
+        .td-right  { text-align: right; }
+
+        .score-badge {
+            font-family: var(--mono);
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .action-cell {
+            display: flex;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .rank-pill {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 22px;
+        }
+
+        .rank-pill.r1 { background: rgba(255,214,0,0.1); border-color: rgba(255,214,0,0.4); color: #ffd600; }
+        .rank-pill.r2 { background: rgba(176,190,197,0.1); border-color: rgba(176,190,197,0.3); color: #b0bec5; }
+        .rank-pill.r3 { background: rgba(141,110,99,0.1); border-color: rgba(141,110,99,0.3); color: #8d6e63; }
+
+        .hints-count {
+            font-size: 12px;
+            color: var(--amber);
+            font-family: var(--mono);
+        }
+
+        .last-active {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: var(--mono);
+        }
+
+        /* ── SEARCH / TOOLBAR ── */
+        .table-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .search-input {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            border-radius: 6px;
+            padding: 7px 12px;
+            font-size: 13px;
+            font-family: var(--font);
+            color: var(--text);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-input:focus { border-color: var(--accent); }
+        .search-input::placeholder { color: var(--text-muted); }
+
+        /* ── LIVE MONITOR ── */
+        .monitor-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 280px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border-hi) transparent;
+        }
+
+        .monitor-item {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            animation: fade-in 0.3s ease;
+        }
+
+        .monitor-item.correct  { border-left: 3px solid var(--green); }
+        .monitor-item.wrong    { border-left: 3px solid var(--red); }
+        .monitor-item.system   { border-left: 3px solid var(--accent); }
+
+        .monitor-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            margin-top: 4px; flex-shrink: 0;
+        }
+
+        .monitor-item.correct .monitor-dot  { background: var(--green); }
+        .monitor-item.wrong .monitor-dot    { background: var(--red); }
+        .monitor-item.system .monitor-dot   { background: var(--accent); }
+
+        .monitor-content { flex: 1; min-width: 0; }
+        .monitor-msg  { font-size: 13px; color: var(--text); }
+        .monitor-time { font-size: 11px; color: var(--text-muted); font-family: var(--mono); margin-top: 2px; }
+
+        /* ── STATS ROW ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-card .sv { font-size: 28px; font-weight: 700; color: var(--text); font-family: var(--mono); }
+        .stat-card .sl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+        .stat-card.green .sv { color: var(--green); }
+        .stat-card.amber .sv { color: var(--amber); }
+        .stat-card.blue  .sv { color: var(--blue);  }
+
+        /* ── EXPORT BUTTONS ── */
+        .export-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        /* ── CATEGORY CONTROLS ── */
+        .category-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .category-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            gap: 8px;
+        }
+
+        .cat-info { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+        .cat-emoji { font-size: 16px; }
+        .cat-name { font-size: 13px; font-weight: 600; color: var(--text); }
+        .cat-count { font-size: 11px; color: var(--text-muted); font-family: var(--mono); }
+
+        .toggle-switch {
+            position: relative;
+            width: 36px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+        .toggle-switch .slider {
+            position: absolute;
+            inset: 0;
+            background: var(--border-hi);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch .slider::before {
+            content: '';
+            position: absolute;
+            left: 3px;
+            top: 3px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch input:checked + .slider { background: var(--green); }
+        .toggle-switch input:checked + .slider::before { transform: translateX(16px); }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border-hi);
+            border-radius: 12px;
+            padding: 32px;
+            width: 420px;
+            max-width: 90vw;
+            animation: modal-in 0.2s ease;
+        }
+
+        .modal-box h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .modal-box p {
+            font-size: 14px;
+            color: var(--text-soft);
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-box input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border-hi);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-family: var(--mono);
+            color: var(--text);
+            outline: none;
+            margin-bottom: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .modal-box input:focus { border-color: var(--accent); }
+
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+        /* ── TOAST ── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: white;
+            animation: toast-in 0.3s ease;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 240px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+
+        .toast.success { background: #166534; border: 1px solid var(--green); }
+        .toast.error   { background: #7f1d1d; border: 1px solid var(--red); }
+        .toast.info    { background: #1e1b4b; border: 1px solid var(--accent); }
+
+        /* ── SCROLLBAR ── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+
+        /* ── ANIMATIONS ── */
+        @keyframes pulse-dot { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+        @keyframes modal-in { from{opacity:0;transform:scale(0.95)translateY(8px)} to{opacity:1;transform:none} }
+        @keyframes toast-in { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+        @keyframes fade-in   { from{opacity:0;} to{opacity:1;} }
+
+        @media (max-width: 1024px) {
+            .admin-layout { grid-template-columns: 1fr; }
+            .col-side { order: -1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+    <div class="login-box">
+        <div class="login-logo">
+            <span class="shield">🛡️</span>
+            <h1>Admin Control</h1>
+            <p>MINI CTF // PRIVATE ACCESS</p>
+        </div>
+        <div class="login-field">
+            <label for="adminKey">Admin Password</label>
+            <input type="password" id="adminKey" placeholder="Enter admin secret" autocomplete="off" />
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button class="btn-login" id="loginBtn" onclick="login()">Access System</button>
+        <div class="login-rate-msg" id="rateMsg"></div>
+    </div>
+</div>
+
+<!-- ── ADMIN MAIN ── -->
+<div id="adminMain">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+        <div class="topbar-brand">
+            <span class="icon">🛡️</span>
+            <span class="name">Admin Control</span>
+            <span class="tag">PRIVATE</span>
+        </div>
+        <div class="topbar-right">
+            <div class="session-chip active" id="topSessionChip">
+                <div class="chip-dot"></div>
+                <span id="topSessionText">SESSION ACTIVE</span>
+            </div>
+            <button class="btn-logout" onclick="logout()">↩ Logout</button>
+        </div>
+    </div>
+
+    <!-- LAYOUT -->
+    <div class="admin-layout">
+
+        <!-- ── MAIN COLUMN ── -->
+        <div class="col-main">
+
+            <!-- STATS ROW -->
+            <div class="stats-grid">
+                <div class="stat-card green">
+                    <div class="sv" id="statPlayers">0</div>
+                    <div class="sl">Players</div>
+                </div>
+                <div class="stat-card amber">
+                    <div class="sv" id="statSolves">0</div>
+                    <div class="sl">Total Solves</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="sv" id="statTopScore">—</div>
+                    <div class="sl">Top Score</div>
+                </div>
+            </div>
+
+            <!-- USER MANAGEMENT -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">👥</span> User Management
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">↻ Refresh</button>
+                </div>
+                <div class="table-toolbar">
+                    <input type="text" class="search-input" placeholder="Search operator..." id="searchInput" oninput="filterUsers()" />
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width:44px;" class="center">Rank</th>
+                                <th>Operator</th>
+                                <th class="center">Score</th>
+                                <th class="center">Solved</th>
+                                <th class="center">Hints</th>
+                                <th class="center">Last Active</th>
+                                <th class="right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-muted);">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- LIVE MONITOR -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">📡</span> Live Monitor
+                    </div>
+                    <span style="font-size:11px; color:var(--text-muted); font-family:var(--mono);" id="monitorCount">0 events</span>
+                </div>
+                <div class="card-body">
+                    <div class="monitor-feed" id="monitorFeed">
+                        <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">Waiting for activity...</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ── SIDE COLUMN ── -->
+        <div class="col-side">
+
+            <!-- SESSION CONTROL -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">⚙️</span> Session Control
+                    </div>
+                </div>
+                <div class="card-body" style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="session-controls">
+                        <button class="session-btn-big sb-start" onclick="sessionAction('start')" id="btnStart">
+                            <span class="sb-icon">▶</span>
+                            <span class="sb-label">Start</span>
+                            <span class="sb-desc">Resume accepting submissions</span>
+                        </button>
+                        <button class="session-btn-big sb-end" onclick="sessionAction('end')" id="btnEnd">
+                            <span class="sb-icon">■</span>
+                            <span class="sb-label">End Session</span>
+                            <span class="sb-desc">Lock all submissions</span>
+                        </button>
+                        <button class="session-btn-big sb-pause" onclick="sessionAction('pause')" id="btnPause">
+                            <span class="sb-icon">⏸</span>
+                            <span class="sb-label">Pause</span>
+                            <span class="sb-desc">Temporarily hold</span>
+                        </button>
+                        <button class="session-btn-big sb-fresh" onclick="freshStart()" id="btnFresh">
+                            <span class="sb-icon">🔄</span>
+                            <span class="sb-label">Fresh Start</span>
+                            <span class="sb-desc">Wipe all data</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CATEGORY CONTROL -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">📂</span> Category Control
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="category-list" id="categoryList">
+                        <div style="color:var(--text-muted); font-size:13px;">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPORT -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span class="icon">📤</span> Export Data
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="export-grid">
+                        <button class="btn btn-ghost" onclick="exportLeaderboard()" style="flex-direction:column; gap:4px; padding:14px; height:auto;">
+                            <span style="font-size:20px;">🏆</span>
+                            <span>Leaderboard CSV</span>
+                        </button>
+                        <button class="btn btn-ghost" onclick="exportParticipation()" style="flex-direction:column; gap:4px; padding:14px; height:auto;">
+                            <span style="font-size:20px;">📋</span>
+                            <span>Participation CSV</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL: RENAME USER ── -->
+<div class="modal-overlay" id="renameModal">
+    <div class="modal-box">
+        <h3>Rename Operator</h3>
+        <p>Enter a new name for <strong id="renameUserLabel">—</strong>.</p>
+        <input type="text" id="renameInput" placeholder="New name" maxlength="32" />
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('renameModal')">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmRename()">Rename</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL: CONFIRM DANGER ── -->
+<div class="modal-overlay" id="dangerModal">
+    <div class="modal-box">
+        <h3 id="dangerTitle" style="color:var(--red)">Confirm Action</h3>
+        <p id="dangerDesc">This action cannot be undone.</p>
+        <p style="margin-bottom:12px; font-size:13px; color:var(--text-soft);">Type <strong id="dangerConfirmWord" style="color:var(--red); font-family:var(--mono);"></strong> to confirm:</p>
+        <input type="text" id="dangerInput" placeholder="" />
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal('dangerModal')">Cancel</button>
+            <button class="btn btn-danger" id="dangerConfirmBtn" onclick="executeDanger()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── TOAST CONTAINER ── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    // ── STATE ──────────────────────────────────────────────────────────────────
+    let SECRET = '';
+    let sessionState = 'active'; // active | paused | ended
+    let allUsers = [];
+    let totalChallenges = 42;
+    let dangerCallback = null;
+    let renameTargetId = null;
+    let monitorEvents = [];
+    let loginAttempts = 0;
+    let loginBlocked = false;
+    const MAX_LOGIN_ATTEMPTS = 5;
+
+    // ── LOGIN ──────────────────────────────────────────────────────────────────
+    document.getElementById('adminKey').addEventListener('keydown', e => {
+        if (e.key === 'Enter') login();
+    });
+
+    async function login() {
+        if (loginBlocked) return;
+        const key = document.getElementById('adminKey').value.trim();
+        if (!key) return;
+
+        const btn = document.getElementById('loginBtn');
+        const errorEl = document.getElementById('loginError');
+
+        btn.disabled = true;
+        btn.textContent = 'Authenticating...';
+        errorEl.textContent = '';
+
+        try {
+            const res = await fetch('/admin/dashboard', {
+                headers: { 'Authorization': `Bearer ${key}` }
+            });
+
+            if (res.ok) {
+                SECRET = key;
+                loginAttempts = 0;
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('adminMain').style.display = 'block';
+                initAdmin();
+            } else if (res.status === 429) {
+                errorEl.textContent = 'Rate limited. Please wait.';
+                startLockout(30);
+            } else {
+                loginAttempts++;
+                if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+                    errorEl.textContent = `Too many attempts. Locked for 60s.`;
+                    startLockout(60);
+                } else {
+                    errorEl.textContent = `Invalid password. (${MAX_LOGIN_ATTEMPTS - loginAttempts} attempts left)`;
+                }
+            }
+        } catch(e) {
+            errorEl.textContent = 'Connection error. Server unreachable.';
+        } finally {
+            if (!loginBlocked) {
+                btn.disabled = false;
+                btn.textContent = 'Access System';
+            }
+        }
+    }
+
+    function startLockout(seconds) {
+        loginBlocked = true;
+        const btn = document.getElementById('loginBtn');
+        const rateMsg = document.getElementById('rateMsg');
+        btn.disabled = true;
+        let remaining = seconds;
+        const timer = setInterval(() => {
+            remaining--;
+            rateMsg.textContent = `Locked for ${remaining}s...`;
+            if (remaining <= 0) {
+                clearInterval(timer);
+                loginBlocked = false;
+                btn.disabled = false;
+                btn.textContent = 'Access System';
+                rateMsg.textContent = '';
+                loginAttempts = 0;
+            }
+        }, 1000);
+        rateMsg.textContent = `Locked for ${seconds}s...`;
+    }
+
+    function logout() {
+        SECRET = '';
+        document.getElementById('adminKey').value = '';
+        document.getElementById('adminMain').style.display = 'none';
+        document.getElementById('loginScreen').style.display = 'flex';
+        if (socket) socket.disconnect();
+    }
+
+    // ── INIT ──────────────────────────────────────────────────────────────────
+    let socket;
+    function initAdmin() {
+        loadDashboard();
+        setupSocket();
+        setInterval(loadDashboard, 10000);
+    }
+
+    function setupSocket() {
+        socket = io();
+        socket.on('challenge_solved', evt => {
+            addMonitorEvent('correct', `${esc(evt.name)} solved "${esc(evt.challengeTitle)}"${evt.noHint ? ' (no hint ✦)' : ''}`);
+        });
+        socket.on('session_state', data => {
+            updateSessionUI(data.active === false && data.paused ? 'paused' : data.active ? 'active' : 'ended');
+        });
+    }
+
+    // ── DASHBOARD DATA ────────────────────────────────────────────────────────
+    async function loadDashboard() {
+        try {
+            const res = await fetch('/admin/dashboard', {
+                headers: { 'Authorization': `Bearer ${SECRET}` }
+            });
+            if (res.status === 403) { logout(); return; }
+            const data = await res.json();
+
+            totalChallenges = data.totalChallenges || 42;
+            allUsers = data.users || [];
+
+            // Stats
+            document.getElementById('statPlayers').textContent = allUsers.length;
+            const totalSolves = allUsers.reduce((s, u) => s + u.solved, 0);
+            document.getElementById('statSolves').textContent = totalSolves;
+            const topUser = allUsers.sort((a,b) => b.score - a.score)[0];
+            document.getElementById('statTopScore').textContent = topUser ? topUser.score : '—';
+
+            // Session state
+            if (typeof data.sessionActive !== 'undefined') {
+                const st = data.paused ? 'paused' : data.sessionActive ? 'active' : 'ended';
+                updateSessionUI(st);
+            }
+
+            renderUsers(allUsers);
+            renderCategories(data.categories || []);
+
+        } catch(e) {}
+    }
+
+    // ── USERS TABLE ───────────────────────────────────────────────────────────
+    function filterUsers() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = q ? allUsers.filter(u => u.name.toLowerCase().includes(q)) : allUsers;
+        renderUsers(filtered);
+    }
+
+    function renderUsers(users) {
+        const tbody = document.getElementById('usersTableBody');
+        const sorted = [...users].sort((a,b) => b.score - a.score);
+
+        if (sorted.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted);">No players yet</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = sorted.map((u, i) => {
+            const rank = i + 1;
+            const rankClass = rank === 1 ? 'r1' : rank === 2 ? 'r2' : rank === 3 ? 'r3' : '';
+            const lastActive = u.lastSolveTimestamp ? timeAgo(u.lastSolveTimestamp) : '—';
+            return `
+                <tr>
+                    <td class="td-center"><span class="rank-pill ${rankClass}">${rank}</span></td>
+                    <td class="td-name">${esc(u.name)}</td>
+                    <td class="td-center"><span class="score-badge">${u.score}</span></td>
+                    <td class="td-center td-mono">${u.solved}/${totalChallenges}</td>
+                    <td class="td-center"><span class="hints-count">${u.hintsUsed || 0}</span></td>
+                    <td class="td-center"><span class="last-active">${lastActive}</span></td>
+                    <td>
+                        <div class="action-cell">
+                            <button class="btn btn-ghost btn-xs" onclick="openRename('${u.sessionId}','${esc(u.name)}')">Rename</button>
+                            <button class="btn btn-amber btn-xs" onclick="confirmResetUser('${u.sessionId}','${esc(u.name)}')">Reset</button>
+                            <button class="btn btn-danger btn-xs" onclick="confirmBanUser('${u.sessionId}','${esc(u.name)}')">Ban</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // ── RENAME ────────────────────────────────────────────────────────────────
+    function openRename(sessionId, currentName) {
+        renameTargetId = sessionId;
+        document.getElementById('renameUserLabel').textContent = currentName;
+        document.getElementById('renameInput').value = currentName;
+        document.getElementById('renameModal').classList.add('open');
+        document.getElementById('renameInput').focus();
+    }
+
+    async function confirmRename() {
+        const newName = document.getElementById('renameInput').value.trim();
+        if (!newName) return;
+        closeModal('renameModal');
+        try {
+            const res = await fetch('/admin/rename-user', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${SECRET}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId: renameTargetId, newName })
+            });
+            if (res.ok) {
+                toast('User renamed successfully', 'success');
+                addMonitorEvent('system', `Admin renamed user to "${esc(newName)}"`);
+                loadDashboard();
+            } else {
+                const d = await res.json();
+                toast(d.error || 'Rename failed', 'error');
+            }
+        } catch(e) { toast('Error connecting to server', 'error'); }
+    }
+
+    // ── BAN USER ──────────────────────────────────────────────────────────────
+    function confirmBanUser(sessionId, name) {
+        openDanger(
+            'Ban / Delete User',
+            `This will permanently remove <strong>${esc(name)}</strong> and all their progress.`,
+            'DELETE',
+            async () => {
+                const res = await fetch('/admin/ban', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${SECRET}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                if (res.ok) {
+                    toast(`${name} banned and removed`, 'success');
+                    addMonitorEvent('system', `Admin banned user: ${esc(name)}`);
+                    loadDashboard();
+                } else toast('Ban failed', 'error');
+            }
+        );
+    }
+
+    // ── RESET USER ────────────────────────────────────────────────────────────
+    function confirmResetUser(sessionId, name) {
+        openDanger(
+            'Reset User Progress',
+            `This will reset <strong>${esc(name)}</strong>'s score, solved challenges, and hints back to zero. Their account remains.`,
+            'RESET',
+            async () => {
+                const res = await fetch('/admin/reset-user', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${SECRET}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId })
+                });
+                if (res.ok) {
+                    toast(`${name}'s progress reset`, 'success');
+                    addMonitorEvent('system', `Admin reset user: ${esc(name)}`);
+                    loadDashboard();
+                } else toast('Reset failed', 'error');
+            }
+        );
+    }
+
+    // ── SESSION CONTROL ───────────────────────────────────────────────────────
+    async function sessionAction(action) {
+        const labels = { start: 'START', end: 'END SESSION', pause: 'PAUSE' };
+        const descriptions = {
+            start: 'This will allow players to submit answers.',
+            end: 'This will lock all submissions. Players cannot answer.',
+            pause: 'This will temporarily pause the session.'
+        };
+
+        openDanger(
+            `${labels[action]} Session`,
+            descriptions[action],
+            labels[action],
+            async () => {
+                try {
+                    const body = action === 'start'  ? { active: true,  paused: false } :
+                                 action === 'end'    ? { active: false, paused: false } :
+                                                       { active: false, paused: true  };
+                    const res = await fetch('/admin/session', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${SECRET}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    if (res.ok) {
+                        const state = action === 'start' ? 'active' : action === 'end' ? 'ended' : 'paused';
+                        updateSessionUI(state);
+                        toast(`Session ${action}ed`, 'success');
+                        addMonitorEvent('system', `Admin: session ${action}ed`);
+                    } else toast('Session update failed', 'error');
+                } catch(e) { toast('Error connecting to server', 'error'); }
+            }
+        );
+    }
+
+    // ── FRESH START ───────────────────────────────────────────────────────────
+    function freshStart() {
+        openDanger(
+            '⚠ Fresh Start',
+            'This will permanently wipe ALL users, scores, leaderboard, attempts, and logs. The event will restart from zero.',
+            'START NEW SESSION',
+            async () => {
+                try {
+                    const res = await fetch('/admin/fresh-start', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${SECRET}` }
+                    });
+                    if (res.ok) {
+                        toast('Fresh start complete — all data wiped', 'success');
+                        addMonitorEvent('system', 'Admin triggered Fresh Start — all data cleared');
+                        loadDashboard();
+                        monitorEvents = [];
+                        renderMonitor();
+                    } else toast('Fresh start failed', 'error');
+                } catch(e) { toast('Error connecting to server', 'error'); }
+            }
+        );
+    }
+
+    // ── SESSION UI ────────────────────────────────────────────────────────────
+    function updateSessionUI(state) {
+        sessionState = state;
+        const chip = document.getElementById('topSessionChip');
+        const text = document.getElementById('topSessionText');
+        chip.className = 'session-chip ' + state;
+        text.textContent = state === 'active' ? 'SESSION ACTIVE' : state === 'paused' ? 'SESSION PAUSED' : 'SESSION ENDED';
+    }
+
+    // ── CATEGORIES ────────────────────────────────────────────────────────────
+    const categoryStates = {};
+
+    function renderCategories(cats) {
+        const el = document.getElementById('categoryList');
+        if (!cats.length) { el.innerHTML = '<div style="color:var(--text-muted);font-size:13px;">No categories</div>'; return; }
+
+        const emojis = { web:'🔍', crypto:'🔠', detective:'🕵️', password:'🔐', links:'🌐', image:'🖼️', phishing:'🎣' };
+
+        el.innerHTML = cats.map(cat => {
+            const enabled = categoryStates[cat.id] !== false;
+            return `
+                <div class="category-row">
+                    <div class="cat-info">
+                        <span class="cat-emoji">${emojis[cat.id] || '📂'}</span>
+                        <div>
+                            <div class="cat-name">${esc(cat.title)}</div>
+                            <div class="cat-count">${cat.levels} challenges</div>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleCategory('${cat.id}', this.checked)" />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `;
+        }).join('');
+    }
+
+    async function toggleCategory(catId, enabled) {
+        categoryStates[catId] = enabled;
+        try {
+            await fetch('/admin/category', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${SECRET}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ categoryId: catId, enabled })
+            });
+            toast(`Category ${enabled ? 'enabled' : 'disabled'}`, 'info');
+            addMonitorEvent('system', `Admin ${enabled ? 'enabled' : 'disabled'} category: ${catId}`);
+        } catch(e) {}
+    }
+
+    // ── EXPORT ────────────────────────────────────────────────────────────────
+    async function exportLeaderboard() {
+        try {
+            const res = await fetch('/admin/export', { headers: { 'Authorization': `Bearer ${SECRET}` } });
+            const data = await res.json();
+            if (!data.exportData?.length) { toast('No data to export', 'error'); return; }
+
+            const headers = ['Rank', 'Name', 'Score', 'Solved', 'Hints Used', 'Solved Challenges'];
+            const rows = data.exportData.map((u, i) => [
+                i + 1,
+                `"${u.name.replace(/"/g, '""')}"`,
+                u.score,
+                u.solved_count,
+                u.hints_used,
+                `"${u.solved_challenges}"`
+            ]);
+            downloadCSV([headers, ...rows], `ctf-leaderboard-${dateStr()}.csv`);
+            toast('Leaderboard CSV downloaded', 'success');
+        } catch(e) { toast('Export failed', 'error'); }
+    }
+
+    async function exportParticipation() {
+        try {
+            const res = await fetch('/admin/export/participation', { headers: { 'Authorization': `Bearer ${SECRET}` } });
+            const data = await res.json();
+            if (!data.exportData?.length) { toast('No data to export', 'error'); return; }
+
+            const headers = ['Name', 'Participated', 'Score', 'Solved', 'Hints Used', 'Categories Attempted'];
+            const rows = data.exportData.map(u => [
+                `"${u.name.replace(/"/g, '""')}"`,
+                'Yes',
+                u.score,
+                u.solved_count,
+                u.hints_used,
+                `"${u.categories}"`
+            ]);
+            downloadCSV([headers, ...rows], `ctf-participation-${dateStr()}.csv`);
+            toast('Participation CSV downloaded', 'success');
+        } catch(e) { toast('Export failed', 'error'); }
+    }
+
+    function downloadCSV(rows, filename) {
+        const csv = rows.map(r => r.join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ── MONITOR FEED ──────────────────────────────────────────────────────────
+    function addMonitorEvent(type, msg) {
+        monitorEvents.unshift({ type, msg, time: new Date().toTimeString().slice(0,8) });
+        if (monitorEvents.length > 50) monitorEvents.pop();
+        renderMonitor();
+    }
+
+    function renderMonitor() {
+        const feed = document.getElementById('monitorFeed');
+        const count = document.getElementById('monitorCount');
+        count.textContent = `${monitorEvents.length} events`;
+
+        if (!monitorEvents.length) {
+            feed.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Waiting for activity...</div>';
+            return;
+        }
+
+        feed.innerHTML = monitorEvents.map(e => `
+            <div class="monitor-item ${e.type}">
+                <div class="monitor-dot"></div>
+                <div class="monitor-content">
+                    <div class="monitor-msg">${e.msg}</div>
+                    <div class="monitor-time">${e.time}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ── DANGER MODAL ──────────────────────────────────────────────────────────
+    function openDanger(title, desc, word, callback) {
+        dangerCallback = callback;
+        document.getElementById('dangerTitle').textContent = title;
+        document.getElementById('dangerDesc').innerHTML = desc;
+        document.getElementById('dangerConfirmWord').textContent = word;
+        document.getElementById('dangerInput').value = '';
+        document.getElementById('dangerInput').placeholder = word;
+        document.getElementById('dangerModal').classList.add('open');
+        setTimeout(() => document.getElementById('dangerInput').focus(), 100);
+    }
+
+    document.getElementById('dangerInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') executeDanger();
+    });
+
+    async function executeDanger() {
+        const word = document.getElementById('dangerConfirmWord').textContent;
+        const input = document.getElementById('dangerInput').value;
+        if (input !== word) {
+            document.getElementById('dangerInput').style.borderColor = 'var(--red)';
+            setTimeout(() => document.getElementById('dangerInput').style.borderColor = '', 1000);
+            return;
+        }
+        closeModal('dangerModal');
+        if (dangerCallback) await dangerCallback();
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('open');
+    }
+
+    // Close modals on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(el => {
+        el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+    });
+
+    // ── TOAST ──────────────────────────────────────────────────────────────────
+    function toast(msg, type = 'info') {
+        const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+        const el = document.createElement('div');
+        el.className = `toast ${type}`;
+        el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+        document.getElementById('toastContainer').prepend(el);
+        setTimeout(() => el.remove(), 3500);
+    }
+
+    // ── HELPERS ───────────────────────────────────────────────────────────────
+    function esc(str) {
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    function dateStr() {
+        return new Date().toISOString().split('T')[0];
+    }
+
+    function timeAgo(ts) {
+        if (!ts) return '—';
+        const diff = Date.now() - ts;
+        if (diff < 60000) return 'just now';
+        if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
+        if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
+        return `${Math.floor(diff/86400000)}d ago`;
+    }
+</script>
+</body>
+</html>
