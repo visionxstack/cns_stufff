@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Security Analyzer</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Password Security Analyzer</h1>
+            <p class="subtitle">Complete privacy assurance: all calculations are performed locally in your browser. Your password never leaves this device.</p>
+        </header>
+
+        <main class="dashboard">
+            <section class="input-section glass-panel">
+                <div class="input-wrapper">
+                    <i class="ph ph-lock-key icon-left"></i>
+                    <input type="password" id="password-input" placeholder="Enter a password to analyze..." autocomplete="off">
+                    <button type="button" id="toggle-visibility" aria-label="Toggle password visibility">
+                        <i class="ph ph-eye icon-right" id="eye-icon"></i>
+                    </button>
+                </div>
+                
+                <div class="strength-meter-container" id="meter-container">
+                    <div class="meter-labels">
+                        <span id="strength-text">Awaiting Password</span>
+                        <span id="entropy-text">0 bits of entropy</span>
+                    </div>
+                    <div class="meter-bar">
+                        <div class="meter-fill" id="meter-fill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="stats-and-time-grid">
+                <!-- Character Analysis -->
+                <section class="stats-section glass-panel">
+                    <h2><i class="ph ph-chart-bar"></i> Character Analysis</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Length</span>
+                            <span class="stat-value" id="stat-length">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Uppercase</span>
+                            <span class="stat-value" id="stat-upper">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Lowercase</span>
+                            <span class="stat-value" id="stat-lower">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Digits</span>
+                            <span class="stat-value" id="stat-digits">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Symbols</span>
+                            <span class="stat-value" id="stat-symbols">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Pool Size</span>
+                            <span class="stat-value" id="stat-pool">0</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Crack Time Estimates -->
+                <section class="time-section glass-panel">
+                    <h2><i class="ph ph-hourglass-high"></i> Brute-Force Time Estimates</h2>
+                    <p class="time-disclaimer">Approximate time to crack based on attacker capability.</p>
+                    <div class="time-list">
+                        <div class="time-item">
+                            <div class="time-icon"><i class="ph ph-globe"></i></div>
+                            <div class="time-details">
+                                <strong>Online Attack (Throttled)</strong>
+                                <span>~100 guesses / hour</span>
+                            </div>
+                            <div class="time-value" id="time-online-throttle">Instant</div>
+                        </div>
+                        <div class="time-item">
+                            <div class="time-icon"><i class="ph ph-lightning"></i></div>
+                            <div class="time-details">
+                                <strong>Online Attack (Unthrottled)</strong>
+                                <span>~10 guesses / second</span>
+                            </div>
+                            <div class="time-value" id="time-online-unthrottle">Instant</div>
+                        </div>
+                        <div class="time-item">
+                            <div class="time-icon"><i class="ph ph-hard-drives"></i></div>
+                            <div class="time-details">
+                                <strong>Offline Attack (Slow Hash)</strong>
+                                <span>~10,000 hashes / sec (e.g. bcrypt)</span>
+                            </div>
+                            <div class="time-value" id="time-offline-slow">Instant</div>
+                        </div>
+                        <div class="time-item">
+                            <div class="time-icon"><i class="ph ph-cpu"></i></div>
+                            <div class="time-details">
+                                <strong>Offline Attack (Fast Hash/GPU)</strong>
+                                <span>~10 Billion hashes / sec</span>
+                            </div>
+                            <div class="time-value" id="time-offline-fast">Instant</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Feedback & Suggestions -->
+            <section class="feedback-section glass-panel" id="feedback-section" style="display: none;">
+                <h2><i class="ph ph-lightbulb"></i> Recommendations</h2>
+                <div id="feedback-content">
+                    <div class="warning-box" id="warning-box" style="display: none;"></div>
+                    <ul class="suggestions-list" id="suggestions-list"></ul>
+                </div>
+            </section>
+        </main>
+
+        <hr class="divider">
+
+        <section class="educational-section">
+            <h2>Understanding Password Security</h2>
+            
+            <div class="edu-grid">
+                <div class="edu-card">
+                    <h3><i class="ph ph-math-operations"></i> What is Password Entropy?</h3>
+                    <p>Entropy is a measure of unpredictability, calculated in "bits". It represents how many combinations an attacker would need to guess. A 50-bit password means there are 2<sup>50</sup> possible combinations. Higher entropy means a more secure password.</p>
+                </div>
+                
+                <div class="edu-card">
+                    <h3><i class="ph ph-sword"></i> How Brute-Force Attacks Work</h3>
+                    <p>Attackers use automated software to systematically check every possible password until the correct one is found. Powerful GPUs can perform billions of combinations per second, making short passwords trivial to break.</p>
+                </div>
+                
+                <div class="edu-card">
+                    <h3><i class="ph ph-arrows-out-line-horizontal"></i> Online vs. Offline Attacks</h3>
+                    <p><strong>Online attacks</strong> try logging into a live website, which is usually slow and limited by lockouts (rate limiting). <strong>Offline attacks</strong> occur when a hacker steals the password database and guesses against the cryptographic hashes directly on their own fast hardware without limits.</p>
+                </div>
+                
+                <div class="edu-card">
+                    <h3><i class="ph ph-shield-check"></i> The Role of Hashing</h3>
+                    <p>Good websites scramble your password using slow hashing algorithms like <em>bcrypt</em>, <em>Argon2</em>, or <em>PBKDF2</em>. These are intentionally designed to be slow to compute, slowing down offline brute-force attacks significantly compared to fast, older hashes like MD5.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- zxcvbn script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
